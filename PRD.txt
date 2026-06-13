@@ -1,0 +1,332 @@
+reasonloop Reasoning Kernel v3 PRD
+—— 一个基于状态机 + 反馈控制 + 多视角推理的 LLM 运行时系统
+0. 文档信息
+产品名：reasonloop Kernel
+版本：v3 MVP
+类型：CLI / AI Runtime Framework
+核心目标：构建可控、可迭代、可验证的 LLM 推理执行系统
+1. 产品背景
+1.1 当前 LLM 的核心问题
+
+当前大模型在复杂任务中存在结构性缺陷：
+
+❌ 1. 推理不可控
+一次性生成结果
+无状态管理
+无过程约束
+❌ 2. 多步任务容易漂移
+目标逐步偏移
+局部正确但整体错误
+无全局一致性机制
+❌ 3. 缺乏自我验证能力
+自洽 ≠ 正确
+无外部校验机制
+容易“合理但错误”
+❌ 4. 无调试能力
+推理过程不可观测
+无法定位错误来源
+黑箱行为
+1.2 reasonloop Kernel 要解决的问题
+
+将 LLM 从“生成模型”升级为“可控推理系统”
+
+核心目标：
+
+✔ 可控推理过程
+✔ 可调试思维路径
+✔ 可迭代优化结果
+✔ 可外部验证正确性
+2. 产品定义
+2.1 核心定义
+
+reasonloop Kernel 是一个基于状态机的 LLM 推理运行时，通过循环推理、结构化状态管理、对抗式评估与外部工具校验，实现复杂任务的稳定求解。
+
+2.2 产品形态
+CLI 工具（主）
+Node.js runtime library
+可扩展 agent framework
+3. 核心设计原则
+3.1 状态优先（State First）
+
+所有推理必须进入结构化状态：
+
+思考 = 状态变化过程
+
+3.2 循环推理（Iterative Reasoning）
+
+推理不是一次生成，而是：
+
+生成 → 评估 → 修正 → 再生成
+3.3 收敛控制（Controlled Convergence）
+
+必须有明确停止条件：
+
+预算限制
+稳定性阈值
+迭代上限
+3.4 外部锚定（Grounding）
+
+引入现实世界校验：
+
+代码执行
+API 查询
+检索系统
+4. 系统架构设计
+4.1 总体架构
+INPUT
+  ↓
+Policy Controller
+  ↓
+Multi-View Selector (optional)
+  ↓
+Scratchpad Reasoning Engine
+  ↓
+State Extractor
+  ↓
+Critic System
+  ↓
+Adversary System
+  ↓
+Tool/Validator Layer
+  ↓
+State Transition Engine
+  ↓
+Convergence Check
+  ↓
+LOOP or OUTPUT
+5. 核心模块设计
+5.1 Scratchpad（自由推理层）
+定义
+
+LLM 自由生成的非结构化推理空间
+
+特点
+不限制格式
+允许发散思维
+用于探索可能性
+示例
+We should first understand the architecture problem...
+Maybe microservices is better...
+But there is scaling concern...
+作用
+承载“思考过程”
+不参与最终存储
+用于后续结构化提取
+5.2 State（结构化记忆层）
+定义
+
+系统唯一可信的结构化推理状态
+
+数据结构
+interface State {
+  iteration: number;
+
+  claims: Claim[];
+  assumptions: Assumption[];
+  evidence: Evidence[];
+
+  openQuestions: string[];
+  controversies: Controversy[];
+
+  metadata: {
+    stability: number;
+    lastAction: string;
+  };
+}
+特点
+可版本化
+可比较
+可调试
+作用
+
+思考的“压缩存档”
+
+5.3 State Transition Engine（状态转移系统）
+定义
+
+控制 state 从 t → t+1 的唯一函数
+
+核心函数
+state(t+1) = f(
+  state(t),
+  scratchpad,
+  critic,
+  adversary,
+  tool_result
+)
+功能
+去重 claims
+合并 evidence
+更新 confidence
+标记冲突
+5.4 Policy Controller（控制器）
+定义
+
+决定下一步行为的系统
+
+输出
+type PolicyDecision = {
+  nextAction: "expand" | "refine" | "verify" | "adversary" | "stop";
+  activeViews: string[];
+  toolEnabled: boolean;
+};
+决策依据
+iteration
+stability
+budget
+estimated gain
+本质
+
+推理系统的“调度器”
+
+5.5 Critic System（三角色结构）
+5.5.1 Critic（逻辑检查）
+找漏洞
+找遗漏
+找不一致
+5.5.2 Adversary（攻击系统）
+构造反例
+破坏假设
+提出极端情况
+5.5.3 Validator（外部验证）
+tool execution
+retrieval
+rules engine
+输出结构
+interface CriticOutput {
+  issues: string[];
+  risks: string[];
+  contradictions: string[];
+}
+5.6 Tool Grounding Layer
+定义
+
+连接现实世界的执行层
+
+支持能力
+代码执行
+API 调用
+文件系统
+数据查询
+作用
+防止自洽幻觉
+提供真实反馈
+5.7 Multi-View Reasoning（多视角系统）
+定义
+
+对同一问题使用不同约束系统推理
+
+视角类型
+causal（因果）
+structural（结构）
+constraint（约束）
+comparative（对比）
+输出单位
+view → independent reasoning state
+融合方式
+claim 去重
+confidence 加权
+冲突标记
+6. 推理循环（核心执行流程）
+while (true) {
+
+  scratchpad = generate(state)
+
+  state_fragment = extract(scratchpad)
+
+  critic = runCritic(state_fragment)
+  adversary = runAdversary(state_fragment)
+
+  tool_result = runTools(state)
+
+  state = transition(
+    state,
+    scratchpad,
+    critic,
+    adversary,
+    tool_result
+  )
+
+  decision = policy(state)
+
+  if (decision.nextAction === "stop") break
+}
+7. 收敛机制设计
+7.1 收敛定义
+
+不再进行有效信息增益的状态
+
+7.2 收敛条件
+stop if (
+  iteration >= max_iterations ||
+  budget <= 0 ||
+  stability > threshold
+)
+7.3 现实解释
+不是“正确停止”
+是“成本不值得继续”
+8. CLI 产品设计
+8.1 命令结构
+reasonloop run "problem"
+8.2 模式
+单次模式
+reasonloop run "design system"
+调试模式
+reasonloop run --trace
+
+输出：
+
+iteration logs
+state diff
+critic output
+policy decisions
+交互模式
+reasonloop repl
+9. 技术栈建议
+Node.js / TypeScript
+OpenAI / Claude API
+JSON State storage
+Optional: SQLite for persistence
+10. 性能与成本控制
+10.1 最大问题
+
+多轮 loop + multi-view = token 爆炸
+
+10.2 控制策略
+dynamic view selection
+early stop policy
+budget-aware execution
+11. MVP范围（强制收敛）
+必须实现
+scratchpad
+state
+critic
+policy
+loop
+暂缓实现
+full multi-view
+advanced adversary graph
+complex fusion system
+12. 产品价值总结
+reasonloop Kernel 解决的是：
+
+LLM 在复杂任务中的“不稳定推理问题”
+
+具体价值：
+✔ 防漂移
+✔ 可调试
+✔ 可迭代
+✔ 可验证
+✔ 可控成本
+13. 产品定位（一句话）
+
+A controlled reasoning runtime that transforms LLMs into iterative, stateful, and externally grounded problem-solving systems.
+
+14. 最终结论
+reasonloop Kernel 不是：
+prompt 工程
+agent wrapper
+chat CLI
+reasonloop Kernel 是：
+
+一个 LLM 推理控制操作系统（Reasoning OS）
