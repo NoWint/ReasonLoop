@@ -1,4 +1,9 @@
 import type { ReasoningState, PolicyDecision, ConvergenceConfig } from './types.js';
+import type { Policy } from './policy-meta.js';
+import { MetaReasoningPolicy } from './policy-meta.js';
+import type { ModelAdapter } from '../engine/adapter.js';
+
+export type { Policy } from './policy-meta.js';
 
 function estimateGain(state: ReasoningState): number {
   const openScore = state.openQuestions.length * 0.2;
@@ -43,4 +48,29 @@ export function decide(state: ReasoningState, config: ConvergenceConfig): Policy
     return { nextAction: 'expand', reasoning: `Low stability (${stability.toFixed(2)})`, estimatedGain: gain, estimatedCost: cost };
   }
   return { nextAction: 'refine', reasoning: `Medium stability (${stability.toFixed(2)}), refining`, estimatedGain: gain, estimatedCost: cost };
+}
+
+export class HeuristicPolicy implements Policy {
+  async decide(state: ReasoningState, config: ConvergenceConfig): Promise<PolicyDecision> {
+    return decide(state, config);
+  }
+}
+
+export class PolicyController implements Policy {
+  private heuristic: HeuristicPolicy;
+  private meta: MetaReasoningPolicy | null;
+
+  constructor(adapter?: ModelAdapter, model?: string) {
+    this.heuristic = new HeuristicPolicy();
+    this.meta = adapter && model ? new MetaReasoningPolicy(adapter, model) : null;
+  }
+
+  async decide(state: ReasoningState, config: ConvergenceConfig): Promise<PolicyDecision> {
+    const hasControversies = state.controversies.some(c => !c.resolved);
+    const useMeta = this.meta !== null && (state.iteration >= 3 || hasControversies);
+    if (useMeta) {
+      return this.meta!.decide(state, config);
+    }
+    return this.heuristic.decide(state, config);
+  }
 }
