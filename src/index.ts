@@ -1,6 +1,14 @@
 // ReasonLoop Middleware - Library Entry
 
-// Core types
+// ─── High-level Engine API (recommended for external use) ───────────
+export { ReasonLoop, createEngine } from './engine/index.js';
+export type {
+  ReasonLoopEngineConfig,
+  ReasonOptions,
+  ReasonResult,
+} from './engine/index.js';
+
+// ─── Core types ─────────────────────────────────────────────────────
 export type {
   Claim, Assumption, Evidence, Controversy, ReasoningState, StateMetadata,
   CriticOutput, Decision, PolicyDecision, ComplexityAnalysis, CompiledPrompt,
