@@ -72,14 +72,18 @@ describe('Core Types', () => {
     const result: ValidationResult = {
       passed: true,
       evidence: 'Code executed successfully',
+      confidence: 0.9,
+      source: 'code',
     };
     expect(result.passed).toBe(true);
+    expect(result.confidence).toBe(0.9);
+    expect(result.source).toBe('code');
   });
 
   it('should define a Validator interface', () => {
     const validator: Validator = {
       name: 'test-validator',
-      validate: async () => ({ passed: true, evidence: 'ok' }),
+      validate: async () => ({ passed: true, evidence: 'ok', confidence: 0.5, source: 'noop' }),
     };
     expect(validator.name).toBe('test-validator');
   });

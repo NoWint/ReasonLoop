@@ -55,3 +55,17 @@ export { emitAsSSE, formatOpenAIStreamChunk, formatAnthropicStreamEvents } from 
 
 // Gateway auth
 export { createAuthHook } from './gateway/auth.js';
+
+// Validators
+export {
+  RegexRuleValidator, JsonSchemaRuleValidator,
+  SafeEvalValidator, DockerSandboxValidator,
+  RetrievalValidator, NoopSearchProvider,
+  CompositeValidator,
+} from './validators/index.js';
+export type {
+  RegexRuleValidatorConfig, JsonSchemaRuleValidatorConfig,
+  SafeEvalValidatorConfig,
+  RetrievalValidatorConfig, SearchProvider, SearchResult,
+  CompositeValidatorConfig,
+} from './validators/index.js';
