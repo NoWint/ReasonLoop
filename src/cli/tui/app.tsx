@@ -12,6 +12,7 @@ export interface ChatState {
   provider: string;
   model: string;
   multiView: boolean;
+  debateMode: boolean;
   maxIterations: number;
   budget: number;
   currentIteration: number;
@@ -94,6 +95,7 @@ export const App: React.FC<AppProps> = ({ state, onSendMessage }) => {
         provider={state.provider}
         model={state.model}
         multiView={state.multiView}
+        debateMode={state.debateMode}
         iteration={state.currentIteration}
         maxIterations={state.maxIterations}
         stability={state.stability}

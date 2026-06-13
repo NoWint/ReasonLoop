@@ -5,6 +5,7 @@ interface HeaderProps {
   provider: string;
   model: string;
   multiView: boolean;
+  debateMode: boolean;
   iteration: number;
   maxIterations: number;
   stability: number;
@@ -17,6 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
   provider,
   model,
   multiView,
+  debateMode,
   iteration,
   maxIterations,
   stability,
@@ -34,10 +36,12 @@ export const Header: React.FC<HeaderProps> = ({
       <Text> | </Text>
       <Text color="cyan">{model}</Text>
       <Text> | </Text>
-      {multiView ? (
+      {debateMode ? (
+        <Text color="magenta">DEBATE</Text>
+      ) : multiView ? (
         <Text color="green">multi-view: ON</Text>
       ) : (
-        <Text color="gray">multi-view: OFF</Text>
+        <Text color="gray">standard</Text>
       )}
       <Text> | </Text>
       <Text>iter: {iteration}/{maxIterations}</Text>

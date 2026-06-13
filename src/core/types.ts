@@ -179,3 +179,66 @@ export interface ServerConfig {
     views?: ReasoningView[];
   };
 }
+
+// ─── Team Debate Types ──────────────────────────────────────────────
+
+export type AgentStance = 'support' | 'oppose' | 'neutral' | 'concede';
+
+export interface TeamAgent {
+  id: string;
+  name: string;
+  role: string;                     // e.g. "Systems Architect", "Security Expert"
+  systemPrompt: string;
+  personality: string;              // e.g. "rigorous", "creative", "skeptical"
+  expertise: string[];              // e.g. ["distributed-systems", "security"]
+}
+
+export interface AgentResponse {
+  agentId: string;
+  round: number;
+  content: string;                  // Full response text
+  claims: string[];                 // Claims made
+  challenges: AgentChallenge[];     // Challenges to other agents
+  stance: AgentStance;              // Overall stance on the topic
+}
+
+export interface AgentChallenge {
+  targetAgentId: string;
+  targetClaim: string;              // The claim being challenged
+  counterArgument: string;          // Why it's wrong or incomplete
+  evidence: string;                 // Supporting evidence
+  severity: 'minor' | 'major' | 'fatal';  // How serious the challenge is
+}
+
+export interface DebateRound {
+  round: number;
+  type: 'opening' | 'rebuttal' | 'defense' | 'synthesis';
+  responses: AgentResponse[];
+  duration: number;                 // ms
+}
+
+export interface ConsensusPoint {
+  content: string;
+  agreeingAgents: string[];         // Agent IDs
+  confidence: number;               // 0-1
+}
+
+export interface IrreconcilableConflict {
+  description: string;
+  positions: Array<{
+    agentId: string;
+    stance: string;
+    reasoning: string;
+  }>;
+}
+
+export interface TeamDebateResult {
+  goal: string;
+  agents: TeamAgent[];
+  rounds: DebateRound[];
+  consensus: ConsensusPoint[];
+  conflicts: IrreconcilableConflict[];
+  finalSynthesis: string;
+  totalTokens: number;
+  totalDuration: number;
+}

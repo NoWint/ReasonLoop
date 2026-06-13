@@ -6,6 +6,8 @@ export type {
   ReasonLoopEngineConfig,
   ReasonOptions,
   ReasonResult,
+  DebateMethodOptions,
+  DebateResult,
 } from './engine/index.js';
 
 // ─── Core types ─────────────────────────────────────────────────────
@@ -14,6 +16,8 @@ export type {
   CriticOutput, Decision, PolicyDecision, ComplexityAnalysis, CompiledPrompt,
   ValidationResult, Validator, ConvergenceConfig, TransitionInput,
   ProxyRequest, ProxyResponse, ServerConfig,
+  AgentStance, TeamAgent, AgentResponse, AgentChallenge,
+  DebateRound, ConsensusPoint, IrreconcilableConflict, TeamDebateResult,
 } from './core/types.js';
 
 // Core functions
@@ -34,6 +38,8 @@ export { createAdapter } from './engine/adapter.js';
 export type { ModelAdapter, AdapterConfig, AdapterOptions, AdapterResponse } from './engine/adapter.js';
 export { runLoop } from './engine/loop.js';
 export type { LoopCallbacks, LoopOptions } from './engine/loop.js';
+export { runTeamDebate, BUILT_IN_AGENTS } from './engine/team-debate.js';
+export type { DebateCallbacks, DebateOptions } from './engine/team-debate.js';
 export { saveState, loadState, loadHistory } from './engine/storage.js';
 
 // Gateway

@@ -10,11 +10,12 @@
 
 import { createAdapter, type ModelAdapter, type AdapterConfig } from '../engine/adapter.js';
 import { runLoop, type LoopCallbacks, type LoopOptions } from '../engine/loop.js';
+import { runTeamDebate, BUILT_IN_AGENTS, type DebateCallbacks, type DebateOptions } from '../engine/team-debate.js';
 import { analyzeComplexity } from '../core/complexity.js';
 import { compileFinalResponse } from '../core/compiler.js';
 import { initState } from '../core/state.js';
 import { v4 as uuid } from 'uuid';
-import type { ReasoningState, ServerConfig } from '../core/types.js';
+import type { ReasoningState, ServerConfig, TeamAgent, TeamDebateResult, ConsensusPoint, IrreconcilableConflict } from '../core/types.js';
 import { loadConfig, type ReasonLoopConfig } from '../config/index.js';
 
 // ─── Engine Configuration ───────────────────────────────────────────
@@ -106,6 +107,42 @@ export interface ReasonResult {
   assumptions: ReasoningState['assumptions'];
   /** Evidence gathered */
   evidence: ReasoningState['evidence'];
+}
+
+// ─── Debate Options & Result ────────────────────────────────────────
+
+export interface DebateMethodOptions {
+  /** Custom agents (default: 4 built-in agents) */
+  agents?: TeamAgent[];
+  /** Number of debate rounds (default: 3) */
+  rounds?: number;
+  /** Run agents in parallel within a round (default: true) */
+  parallel?: boolean;
+  /** Stream callbacks */
+  onRoundStart?: (round: number, type: string) => void;
+  onAgentStart?: (agent: TeamAgent, round: number) => void;
+  onAgentChunk?: (agentId: string, chunk: string) => void;
+  onAgentComplete?: (agent: TeamAgent, response: string, duration: number) => void;
+  onRoundComplete?: (round: number, type: string, duration: number) => void;
+}
+
+export interface DebateResult {
+  /** The final synthesis from all agents */
+  answer: string;
+  /** Full debate result */
+  debate: TeamDebateResult;
+  /** Consensus points reached */
+  consensus: ConsensusPoint[];
+  /** Irreconcilable conflicts */
+  conflicts: IrreconcilableConflict[];
+  /** Total tokens consumed */
+  totalTokens: number;
+  /** Total duration in ms */
+  totalDuration: number;
+  /** Number of rounds */
+  rounds: number;
+  /** Number of agents */
+  agentCount: number;
 }
 
 // ─── ReasonLoop Engine Class ────────────────────────────────────────
@@ -262,6 +299,56 @@ export class ReasonLoop {
       openQuestions: finalState.openQuestions,
       assumptions: finalState.assumptions,
       evidence: finalState.evidence,
+    };
+  }
+
+  /**
+   * Team debate mode. Multiple agents with different perspectives
+   * debate the topic through structured rounds (opening, rebuttal, defense, synthesis).
+   * Agents can challenge, support, or concede to each other.
+   */
+  async debate(topic: string, options: DebateMethodOptions = {}): Promise<DebateResult> {
+    const callbacks: DebateCallbacks = {
+      onRoundStart: options.onRoundStart
+        ? (round, type) => options.onRoundStart!(round, type)
+        : undefined,
+      onAgentStart: options.onAgentStart,
+      onAgentChunk: options.onAgentChunk,
+      onAgentComplete: options.onAgentComplete
+        ? (agent, response, duration) => options.onAgentComplete!(agent, response.content, duration)
+        : undefined,
+      onRoundComplete: options.onRoundComplete
+        ? (round) => options.onRoundComplete!(round.round, round.type, round.duration)
+        : undefined,
+    };
+
+    const debateOptions: DebateOptions = {
+      agents: options.agents,
+      rounds: options.rounds ?? 3,
+      callbacks,
+      parallel: options.parallel ?? true,
+    };
+
+    const result = await runTeamDebate(topic, this.adapter, this.config.model, debateOptions);
+
+    // Build answer from consensus + synthesis
+    const consensusText = result.consensus.length > 0
+      ? result.consensus.map(c => `- ${c.content} (${c.agreeingAgents.length} agents agree, confidence: ${(c.confidence * 100).toFixed(0)}%)`).join('\n')
+      : 'No consensus reached.';
+    const conflictText = result.conflicts.length > 0
+      ? result.conflicts.map(c => `- ${c.description}\n  Positions: ${c.positions.map(p => `${p.agentId}: ${p.stance}`).join(' | ')}`).join('\n')
+      : 'No irreconcilable conflicts.';
+    const answer = `# Consensus\n${consensusText}\n\n# Conflicts\n${conflictText}\n\n# Final Synthesis\n${result.finalSynthesis}`;
+
+    return {
+      answer,
+      debate: result,
+      consensus: result.consensus,
+      conflicts: result.conflicts,
+      totalTokens: result.totalTokens,
+      totalDuration: result.totalDuration,
+      rounds: result.rounds.length,
+      agentCount: result.agents.length,
     };
   }
 
