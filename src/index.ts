@@ -29,3 +29,29 @@ export { saveState, loadState, loadHistory } from './engine/storage.js';
 
 // Gateway
 export { startServer } from './gateway/server.js';
+
+// Config
+export { loadConfig } from './config/index.js';
+export type { ReasonLoopConfig } from './config/index.js';
+export { ReasonLoopConfigSchema } from './config/schema.js';
+
+// Observability
+export { createLogger } from './observability/logger.js';
+export { createMetricsRegistry } from './observability/metrics.js';
+export type { MetricsRegistry } from './observability/metrics.js';
+export { setupTracing, createSpan, createAsyncSpan } from './observability/tracing.js';
+
+// Retry
+export { retryWithBackoff } from './core/retry.js';
+export type { RetryOptions } from './core/retry.js';
+
+// Storage (SQLite)
+export { SQLiteStorage } from './engine/storage-sqlite.js';
+export type { SessionRecord, IterationRecord } from './engine/storage.js';
+export type { Storage } from './engine/storage.js';
+
+// Gateway streaming
+export { emitAsSSE, formatOpenAIStreamChunk, formatAnthropicStreamEvents } from './gateway/stream.js';
+
+// Gateway auth
+export { createAuthHook } from './gateway/auth.js';
