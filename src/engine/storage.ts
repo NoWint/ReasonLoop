@@ -2,6 +2,38 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { ReasoningState } from '../core/types.js';
 
+export interface SessionRecord {
+  id: string;
+  state: ReasoningState;
+  status: 'active' | 'completed' | 'failed';
+}
+
+export interface SessionMeta {
+  id: string;
+  goal: string;
+  status: string;
+  iteration: number;
+  createdAt: number;
+}
+
+export interface IterationRecord {
+  id: string;
+  sessionId: string;
+  phase: string;
+  input: string;
+  output: string;
+  durationMs: number;
+}
+
+export interface Storage {
+  saveSession(session: SessionRecord): Promise<void>;
+  loadSession(id: string): Promise<SessionRecord | null>;
+  listSessions(): Promise<SessionMeta[]>;
+  saveIteration(iteration: IterationRecord): Promise<void>;
+  loadIterations(sessionId: string): Promise<IterationRecord[]>;
+  close(): void;
+}
+
 export async function saveState(state: ReasoningState, outputDir: string): Promise<void> {
   await fs.mkdir(outputDir, { recursive: true });
   const filePath = path.join(outputDir, `state-${String(state.iteration).padStart(4, '0')}.json`);
