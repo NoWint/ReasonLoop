@@ -10,6 +10,7 @@ import { transition } from '../core/transition.js';
 import { checkConvergence } from '../core/convergence.js';
 import { compileState } from '../core/compiler.js';
 import { saveState } from './storage.js';
+import { retryWithBackoff } from '../core/retry.js';
 
 export async function runLoop(
   goal: string,
@@ -28,24 +29,35 @@ export async function runLoop(
     complexityThreshold: config.complexityThreshold,
   };
 
+  const retryOpts = { maxRetries: 3, baseDelay: 1000 };
+  const startTime = Date.now();
+
   while (true) {
+    if (Date.now() - startTime > config.loopTimeoutMs) break;
+
     const decision = decide(state, convergenceConfig);
     if (decision.nextAction === 'stop') break;
 
     // 1. Planner
     const plannerPrompt = compileState(state, decision.nextAction, 'planner');
-    const plannerResponse = await adapter.complete(plannerPrompt.user, {
-      model: config.model, systemPrompt: plannerPrompt.system,
-    });
+    const plannerResponse = await retryWithBackoff(
+      () => adapter.complete(plannerPrompt.user, {
+        model: config.model, systemPrompt: plannerPrompt.system,
+      }),
+      retryOpts,
+    );
     state.metadata.budgetRemaining -= plannerResponse.usage.totalTokens;
     state.metadata.totalTokensUsed += plannerResponse.usage.totalTokens;
     const stateFragment = extractStateFragment(plannerResponse.content, state.iteration + 1);
 
     // 2. Critic
     const criticPrompt = buildCriticPrompt(state);
-    const criticResponse = await adapter.complete(criticPrompt, {
-      model: config.model, systemPrompt: 'You are a critical reasoning evaluator.',
-    });
+    const criticResponse = await retryWithBackoff(
+      () => adapter.complete(criticPrompt, {
+        model: config.model, systemPrompt: 'You are a critical reasoning evaluator.',
+      }),
+      retryOpts,
+    );
     const criticOutput = parseCriticOutput(criticResponse.content);
     state.metadata.budgetRemaining -= criticResponse.usage.totalTokens;
     state.metadata.totalTokensUsed += criticResponse.usage.totalTokens;
@@ -54,9 +66,12 @@ export async function runLoop(
     let adversaryOutput = null;
     if (decision.nextAction === 'attack') {
       const adversaryPrompt = buildAdversaryPrompt(state);
-      const adversaryResponse = await adapter.complete(adversaryPrompt, {
-        model: config.model, systemPrompt: 'You are an adversary. Attack the reasoning.',
-      });
+      const adversaryResponse = await retryWithBackoff(
+        () => adapter.complete(adversaryPrompt, {
+          model: config.model, systemPrompt: 'You are an adversary. Attack the reasoning.',
+        }),
+        retryOpts,
+      );
       adversaryOutput = parseAdversaryOutput(adversaryResponse.content);
       state.metadata.budgetRemaining -= adversaryResponse.usage.totalTokens;
       state.metadata.totalTokensUsed += adversaryResponse.usage.totalTokens;
