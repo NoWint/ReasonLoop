@@ -60,10 +60,10 @@ export async function registerOpenAIRoutes(app: FastifyInstance, ctx: GatewayCon
       return reply.send(response);
     }
 
-    const goal = req.messages[req.messages.length - 1]?.content ?? '';
-    const sessionId = `session-${Date.now()}`;
-    const result = await runLoop(goal, sessionId, ctx.config, adapter);
-    ctx.sessions.set(sessionId, result.finalState);
+      const goal = req.messages[req.messages.length - 1]?.content ?? '';
+      const sessionId = `session-${Date.now()}`;
+      const result = await runLoop(goal, sessionId, ctx.config, adapter, { multiView: ctx.config.multiView });
+      ctx.sessions.set(sessionId, result.finalState);
 
     const compiled = compileFinalResponse(result.finalState, req.messages);
     const response: ProxyResponse = {

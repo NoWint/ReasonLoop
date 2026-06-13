@@ -56,16 +56,36 @@ export function compileFinalResponse(state: ReasoningState, _originalMessages: A
   if (topClaims.length > 0) {
     sections.push('### Key Findings');
     topClaims.forEach(c => sections.push(`- ${c.content} (confidence: ${c.confidence.toFixed(2)})`));
+  } else if (state.rawOutputs && state.rawOutputs.length > 0) {
+    // Fallback: use the last raw output as the main content when no structured claims were extracted
+    sections.push('### Analysis Result');
+    const lastOutput = state.rawOutputs[state.rawOutputs.length - 1];
+    // Truncate if too long, but keep substantial content
+    sections.push(lastOutput.length > 3000 ? lastOutput.slice(0, 3000) + '...' : lastOutput);
+  }
+
+  if (state.assumptions.length > 0) {
+    sections.push('### Assumptions');
+    state.assumptions.forEach(a => sections.push(`- [${a.status}] ${a.content}`));
   }
 
   if (state.openQuestions.length > 0) {
-    sections.push('### Remaining Questions');
-    state.openQuestions.forEach(q => sections.push(`- ${q}`));
+    // Filter out the original goal question if it's still there
+    const filteredQuestions = state.openQuestions.filter(q => q !== state.goal);
+    if (filteredQuestions.length > 0) {
+      sections.push('### Remaining Questions');
+      filteredQuestions.forEach(q => sections.push(`- ${q}`));
+    }
   }
 
   if (state.controversies.some(c => !c.resolved)) {
     sections.push('### Open Controversies');
     state.controversies.filter(c => !c.resolved).forEach(c => sections.push(`- ${c.description}`));
+  }
+
+  if (sections.length === 0) {
+    sections.push('### Analysis Complete');
+    sections.push('The reasoning process completed but did not produce structured findings. The original question may need to be rephrased.');
   }
 
   return sections.join('\n\n');

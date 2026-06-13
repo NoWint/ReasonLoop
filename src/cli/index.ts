@@ -3,6 +3,8 @@ import { registerStartCommand } from './commands/start.js';
 import { registerStatusCommand } from './commands/status.js';
 import { registerSessionsCommand } from './commands/sessions.js';
 import { registerInspectCommand } from './commands/inspect.js';
+import { registerSetupCommand } from './commands/setup.js';
+import { registerChatCommand } from './commands/chat.js';
 
 export function runCLI(): void {
   const program = new Command();
@@ -15,6 +17,8 @@ export function runCLI(): void {
   registerStatusCommand(program);
   registerSessionsCommand(program);
   registerInspectCommand(program);
+  registerSetupCommand(program);
+  registerChatCommand(program);
 
   program.parse();
 }

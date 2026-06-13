@@ -54,6 +54,7 @@ export interface ReasoningState {
   openQuestions: string[];
   controversies: Controversy[];
   metadata: StateMetadata;
+  rawOutputs?: string[];            // Raw LLM outputs from each iteration
 }
 
 export interface CriticOutput {
@@ -173,4 +174,8 @@ export interface ServerConfig {
   complexityThreshold: number;
   outputDir: string;
   loopTimeoutMs: number;
+  multiView?: {
+    enabled: boolean;
+    views?: ReasoningView[];
+  };
 }

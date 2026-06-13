@@ -30,6 +30,23 @@ export class OpenAIAdapter implements ModelAdapter {
     };
   }
 
+  async *streamComplete(prompt: string, options: AdapterOptions): AsyncIterable<string> {
+    const stream = await this.client.chat.completions.create({
+      model: options.model,
+      messages: [
+        ...(options.systemPrompt ? [{ role: 'system' as const, content: options.systemPrompt }] : []),
+        { role: 'user' as const, content: prompt },
+      ],
+      temperature: options.temperature ?? 0.7,
+      max_tokens: options.maxTokens ?? 2000,
+      stream: true,
+    });
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content;
+      if (content) yield content;
+    }
+  }
+
   async forward(request: unknown, _protocol: 'openai' | 'anthropic'): Promise<unknown> {
     const req = request as ProxyRequest;
     const response = await this.client.chat.completions.create({

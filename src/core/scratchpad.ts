@@ -47,14 +47,30 @@ export function extractStateFragment(text: string, iteration: number): Extracted
 
   for (const line of text.split('\n')) {
     const trimmed = line.trim();
-    const claimMatch = trimmed.match(/^CLAIM:\s*(.+)/i);
+
+    // CLAIM: or - CLAIM: or **CLAIM**:
+    const claimMatch = trimmed.match(/^[-*]?\s*\*?CLAIM\*?\s*[:：]\s*(.+)/i);
     if (claimMatch) { fragment.claims.push({ content: claimMatch[1].trim(), confidence: 0.5, source: 'planner', evidence: [], iteration }); continue; }
-    const assumptionMatch = trimmed.match(/^ASSUMPTION:\s*(.+)/i);
+
+    // ASSUMPTION: or - ASSUMPTION: or **ASSUMPTION**:
+    const assumptionMatch = trimmed.match(/^[-*]?\s*\*?ASSUMPTION\*?\s*[:：]\s*(.+)/i);
     if (assumptionMatch) { fragment.assumptions.push({ content: assumptionMatch[1].trim(), status: 'unverified', challengedBy: [], iteration }); continue; }
-    const evidenceMatch = trimmed.match(/^EVIDENCE:\s*(.+)/i);
+
+    // EVIDENCE: or - EVIDENCE: or **EVIDENCE**:
+    const evidenceMatch = trimmed.match(/^[-*]?\s*\*?EVIDENCE\*?\s*[:：]\s*(.+)/i);
     if (evidenceMatch) { fragment.evidence.push({ content: evidenceMatch[1].trim(), type: 'logical', source: 'planner', reliable: true, iteration }); continue; }
-    const questionMatch = trimmed.match(/^QUESTION:\s*(.+)/i);
+
+    // QUESTION: or - QUESTION: or **QUESTION**:
+    const questionMatch = trimmed.match(/^[-*]?\s*\*?QUESTION\*?\s*[:：]\s*(.+)/i);
     if (questionMatch) { fragment.openQuestions.push(questionMatch[1].trim()); continue; }
+  }
+
+  // Fallback: if no structured data was extracted, treat key sentences as claims
+  if (fragment.claims.length === 0 && fragment.assumptions.length === 0 && fragment.openQuestions.length === 0) {
+    const sentences = text.split(/[。\n]/).map(s => s.trim()).filter(s => s.length > 10 && s.length < 200);
+    for (const sentence of sentences.slice(0, 5)) {
+      fragment.claims.push({ content: sentence, confidence: 0.3, source: 'planner', evidence: [], iteration });
+    }
   }
 
   return fragment;

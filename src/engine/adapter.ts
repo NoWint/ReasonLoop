@@ -6,6 +6,7 @@ export interface AdapterConfig {
 export interface ModelAdapter {
   name: string;
   complete(prompt: string, options: AdapterOptions): Promise<AdapterResponse>;
+  streamComplete?(prompt: string, options: AdapterOptions): AsyncIterable<string>;
   forward(request: unknown, protocol: 'openai' | 'anthropic'): Promise<unknown>;
 }
 

@@ -28,6 +28,7 @@ export function transition(currentState: ReasoningState, input: TransitionInput,
     assumptions: mergedAssumptions,
     evidence: [...mergedEvidence, ...validatorEvidence],
     openQuestions: [...currentState.openQuestions, ...newQuestions],
+    rawOutputs: [...(currentState.rawOutputs ?? []), input.scratchpad],
     metadata: {
       ...currentState.metadata,
       stability: 0,

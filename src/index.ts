@@ -25,6 +25,7 @@ export { compileState, compileFinalResponse } from './core/compiler.js';
 export { createAdapter } from './engine/adapter.js';
 export type { ModelAdapter, AdapterConfig, AdapterOptions, AdapterResponse } from './engine/adapter.js';
 export { runLoop } from './engine/loop.js';
+export type { LoopCallbacks, LoopOptions } from './engine/loop.js';
 export { saveState, loadState, loadHistory } from './engine/storage.js';
 
 // Gateway
