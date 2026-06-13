@@ -1,4 +1,4 @@
-import type { ProxyRequest, ProxyResponse, ServerConfig, ReasoningState } from '../../core/types.js';
+import type { ProxyRequest, ProxyResponse, ServerConfig, ReasoningState } from '../core/types.js';
 
 export type { ProxyRequest, ProxyResponse, ServerConfig };
 
