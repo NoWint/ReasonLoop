@@ -88,11 +88,13 @@ export interface ValidationResult {
   passed: boolean;
   evidence: string;
   details?: string;
+  confidence: number;                // 0-1
+  source: 'code' | 'retrieval' | 'rule' | 'noop';
 }
 
 export interface Validator {
   name: string;
-  validate(state: ReasoningState): Promise<ValidationResult>;
+  validate(state: ReasoningState, claim?: Claim): Promise<ValidationResult>;
 }
 
 export interface ConvergenceConfig {
@@ -131,6 +133,20 @@ export interface ProxyResponse {
     finish_reason: string;
   }>;
   usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+}
+
+export interface ReasoningView {
+  id: string;
+  name: string;
+  systemPrompt: string;
+  focusAreas: string[];
+  weight: number;                  // 0-1, used for weighted synthesis
+}
+
+export interface SynthesisResult {
+  consensus: Claim[];
+  conflicts: Controversy[];
+  synthesized: ReasoningState;
 }
 
 export interface ServerConfig {
