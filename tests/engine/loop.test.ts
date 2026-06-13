@@ -17,10 +17,16 @@ function createMockAdapter(responses: string[]): ModelAdapter {
 
 describe('Engine Loop', () => {
   it('should run loop and converge', async () => {
+    // Each iteration now needs: scratchpad response + planner response + critic response
+    // Iteration 1: scratchpad, planner, critic
+    // Iteration 2: scratchpad, planner, critic
     const adapter = createMockAdapter([
-      'CLAIM: Test claim\nASSUMPTION: Test assumption\nQUESTION: What next?',
-      'ISSUE: No evidence\nSUGGESTION: Add evidence',
-      'CLAIM: Test claim\nEVIDENCE: Supporting data',
+      'Maybe microservices? Or monolith? Let me think...',           // scratchpad iter 1
+      'CLAIM: Test claim\nASSUMPTION: Test assumption\nQUESTION: What next?',  // planner iter 1
+      'ISSUE: No evidence\nSUGGESTION: Add evidence',                // critic iter 1
+      'Could also consider serverless...',                            // scratchpad iter 2
+      'CLAIM: Test claim\nEVIDENCE: Supporting data',                // planner iter 2
+      'ISSUE: Still needs validation\nSUGGESTION: Verify',           // critic iter 2
     ]);
     const config: ServerConfig = {
       port: 8080, provider: 'openai', model: 'test', apiKey: 'test',

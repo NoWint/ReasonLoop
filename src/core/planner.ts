@@ -1,6 +1,6 @@
 import type { ReasoningState, Decision, CompiledPrompt } from './types.js';
 
-export function buildPlannerPrompt(state: ReasoningState, action: Decision): CompiledPrompt {
+export function buildPlannerPrompt(state: ReasoningState, action: Decision, scratchpadOutput?: string): CompiledPrompt {
   const system = `You are a reasoning planner. Expand the analysis, propose solutions, and discover possible paths. Do NOT judge correctness — only explore.
 
 Current task: ${action}
@@ -15,6 +15,10 @@ Output format:
 
   const sections: string[] = [];
   sections.push(`## Goal\n${state.goal}`);
+
+  if (scratchpadOutput) {
+    sections.push(`## Exploration Notes (from scratchpad)\n${scratchpadOutput}`);
+  }
 
   if (state.claims.length > 0) {
     sections.push('## Current Claims');

@@ -29,12 +29,8 @@ export function buildScratchpadPrompt(state: ReasoningState, action: Decision): 
     sections.push('');
   }
 
-  sections.push('## Instructions');
-  sections.push('Think freely. Use these prefixes:');
-  sections.push('- CLAIM: <factual assertion>');
-  sections.push('- ASSUMPTION: <unstated premise>');
-  sections.push('- EVIDENCE: <supporting data>');
-  sections.push('- QUESTION: <open question>');
+  sections.push('## Free Exploration Space');
+    sections.push('Think freely and divergently. Explore, guess, try ideas out. No structure required — just think out loud.');
 
   return sections.join('\n');
 }

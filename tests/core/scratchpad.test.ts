@@ -17,6 +17,17 @@ describe('Scratchpad Module', () => {
       const prompt = buildScratchpadPrompt(state, 'refine');
       expect(prompt).toContain('Existing claim');
     });
+
+    it('should use divergent instructions without structured prefixes', () => {
+      const state = initState('test', 's1');
+      const prompt = buildScratchpadPrompt(state, 'expand');
+      expect(prompt).toContain('Free Exploration Space');
+      expect(prompt).toContain('Think freely and divergently');
+      expect(prompt).not.toContain('CLAIM:');
+      expect(prompt).not.toContain('ASSUMPTION:');
+      expect(prompt).not.toContain('EVIDENCE:');
+      expect(prompt).not.toContain('QUESTION:');
+    });
   });
 
   describe('extractStateFragment', () => {

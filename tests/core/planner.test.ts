@@ -16,4 +16,27 @@ describe('Planner Module', () => {
     const prompt = buildPlannerPrompt(state, 'refine');
     expect(prompt.user).toContain('Claim A');
   });
+
+  it('should include scratchpad output as Exploration Notes when provided', () => {
+    const state = initState('test', 's1');
+    const scratchpadOutput = 'Maybe we should consider microservices? Or a monolith could work too...';
+    const prompt = buildPlannerPrompt(state, 'expand', scratchpadOutput);
+    expect(prompt.user).toContain('Exploration Notes (from scratchpad)');
+    expect(prompt.user).toContain(scratchpadOutput);
+  });
+
+  it('should not include Exploration Notes section when scratchpadOutput is not provided', () => {
+    const state = initState('test', 's1');
+    const prompt = buildPlannerPrompt(state, 'expand');
+    expect(prompt.user).not.toContain('Exploration Notes');
+  });
+
+  it('should keep structured output format in system prompt', () => {
+    const state = initState('test', 's1');
+    const prompt = buildPlannerPrompt(state, 'expand');
+    expect(prompt.system).toContain('CLAIM:');
+    expect(prompt.system).toContain('ASSUMPTION:');
+    expect(prompt.system).toContain('EVIDENCE:');
+    expect(prompt.system).toContain('QUESTION:');
+  });
 });

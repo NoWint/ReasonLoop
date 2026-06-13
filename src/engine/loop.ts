@@ -1,14 +1,14 @@
 import type { ReasoningState, ServerConfig, TransitionInput } from '../core/types.js';
 import type { ModelAdapter } from './adapter.js';
 import { initState } from '../core/state.js';
-import { extractStateFragment } from '../core/scratchpad.js';
+import { buildScratchpadPrompt, extractStateFragment } from '../core/scratchpad.js';
+import { buildPlannerPrompt } from '../core/planner.js';
 import { buildCriticPrompt, parseCriticOutput } from '../core/critic.js';
 import { buildAdversaryPrompt, parseAdversaryOutput } from '../core/adversary.js';
 import { noopValidator } from '../core/validator.js';
 import { decide } from '../core/policy.js';
 import { transition } from '../core/transition.js';
 import { checkConvergence } from '../core/convergence.js';
-import { compileState } from '../core/compiler.js';
 import { saveState } from './storage.js';
 import { retryWithBackoff } from '../core/retry.js';
 
@@ -38,8 +38,19 @@ export async function runLoop(
     const decision = decide(state, convergenceConfig);
     if (decision.nextAction === 'stop') break;
 
-    // 1. Planner
-    const plannerPrompt = compileState(state, decision.nextAction, 'planner');
+    // 0. Scratchpad (divergent exploration)
+    const scratchpadPrompt = buildScratchpadPrompt(state, decision.nextAction);
+    const scratchpadResponse = await retryWithBackoff(
+      () => adapter.complete(scratchpadPrompt, {
+        model: config.model, systemPrompt: 'You are a free-thinking explorer. No structure, just explore.',
+      }),
+      retryOpts,
+    );
+    state.metadata.budgetRemaining -= scratchpadResponse.usage.totalTokens;
+    state.metadata.totalTokensUsed += scratchpadResponse.usage.totalTokens;
+
+    // 1. Planner (structured extraction from scratchpad output)
+    const plannerPrompt = buildPlannerPrompt(state, decision.nextAction, scratchpadResponse.content);
     const plannerResponse = await retryWithBackoff(
       () => adapter.complete(plannerPrompt.user, {
         model: config.model, systemPrompt: plannerPrompt.system,
