@@ -149,6 +149,17 @@ export interface SynthesisResult {
   synthesized: ReasoningState;
 }
 
+export interface MemoryEntry {
+  id: string;
+  sessionId: string;
+  goal: string;
+  claims: string[];
+  lessons: string[];
+  embedding: number[];
+  timestamp: number;
+  tags: string[];
+}
+
 export interface ServerConfig {
   port: number;
   provider: 'openai' | 'claude';

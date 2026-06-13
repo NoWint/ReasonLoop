@@ -1,4 +1,5 @@
-import type { ReasoningState, Decision, CompiledPrompt, ReasoningView } from './types.js';
+import type { ReasoningState, Decision, CompiledPrompt, ReasoningView, MemoryEntry } from './types.js';
+import { formatMemoryContext } from '../memory/retriever.js';
 
 const ROLE_PROMPTS: Record<string, string> = {
   planner: 'You are a reasoning planner. Expand the analysis, propose solutions, and discover possible paths. Do NOT judge correctness — only explore.',
@@ -117,4 +118,20 @@ Output format:
   const context = `View: ${view.name} (${view.id}). Reasoning at iteration ${state.iteration}. ${state.claims.length} claims, ${state.openQuestions.length} open questions. Stability: ${state.metadata.stability.toFixed(2)}.`;
 
   return { system, user: sections.join('\n\n'), context };
+}
+
+export function compileStateWithMemory(
+  state: ReasoningState,
+  action: Decision,
+  role: 'planner' | 'critic' | 'adversary',
+  memories: MemoryEntry[],
+): CompiledPrompt {
+  const compiled = compileState(state, action, role);
+  const memoryContext = formatMemoryContext(memories);
+  if (!memoryContext) return compiled;
+  return {
+    system: compiled.system,
+    user: `${memoryContext}\n\n${compiled.user}`,
+    context: compiled.context,
+  };
 }
