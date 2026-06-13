@@ -68,7 +68,7 @@ export async function runLoop(
     // 5. Transition
     const transitionInput: TransitionInput = {
       scratchpad: plannerResponse.content,
-      stateFragment,
+      stateFragment: stateFragment as Partial<ReasoningState>,
       critic: criticOutput,
       adversary: adversaryOutput,
       validatorResults,
